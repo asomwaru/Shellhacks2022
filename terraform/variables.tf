@@ -7,5 +7,5 @@ variable "region" {
 }
 
 variable "project_name" {
-  default = "shellhacks-2022"
+  default = "shell-hacks-2022"
 }
