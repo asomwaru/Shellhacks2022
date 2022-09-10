@@ -1,0 +1,6 @@
+provider "google" {
+  project = var.project_name
+  region  = var.region
+  zone    = var.zone
+  # credentials = file("${path.module}/account.json")
+}
