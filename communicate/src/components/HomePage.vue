@@ -1,13 +1,14 @@
 <template>
   <div class="full">
+    <p class="title">Gibbri.sh</p>
     <div class="half blue">
       <div class="flex">
-        <v-select :items="languages" label="Language" id="l1"></v-select>
+        <v-select :items="languages" label="Language" value="en" id="l1"></v-select>
       </div>
     </div>
     <div class="half">
       <div class="flex">
-        <v-select :items="languages" label="Language" id="l2"></v-select>
+        <v-select :items="languages" label="Language" value="es" id="l2"></v-select>
       </div>
     </div>
 
@@ -80,12 +81,14 @@ export default {
           audioChunks = [];
           mediaRecorder.start();
         } else {
+          document.getElementById("arrow").classList.toggle("flip");
           mediaRecorder.stop();
         }
       }
     };
 
     const flipArrow = () => {
+      turn = !turn;
       document.getElementById("arrow").classList.toggle("flip");
     };
 
@@ -146,6 +149,16 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap');
+
+.title {
+  font-family: Pacifico, cursive;
+  font-size: 32px;
+  position: absolute;
+  top: 15px;
+  left: 25px;
+}
+
 .full {
   width: 100%;
   height: 100%;
@@ -195,20 +208,24 @@ export default {
 }
 
 .direction {
-  opacity: 0.8;
+  opacity: 0.6;
   position: absolute;
   top: 50%;
   left: 50%;
   margin-top: auto;
   margin-bottom: auto;
-  height: clamp(30px, 3rem, 50px);
-  width: clamp(30px, 3rem, 50px);
-  transform: translateX(-50%) rotateZ(0deg);
+  height: 60px;
+  width: 60px;
+  transform: translateX(-50%) translateY(-40px) rotateZ(0deg);
   transition: transform 0.5s;
 }
 
 .flip {
-  transform: translateX(-50%) rotateZ(-180deg);
+  transform: translateX(-50%) translateY(-40px) rotateZ(-180deg);
   transition: transform 0.5s;
+}
+
+label.v-label.v-field-label {
+  transform: translateY(-5px);
 }
 </style>
