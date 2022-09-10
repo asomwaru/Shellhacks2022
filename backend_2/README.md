@@ -5,9 +5,10 @@ cd Shellhacks2022
 git checkout backend
 cd backend_2 && node index.js
 ```
-You'll need a `json` identifier for the project. Place it inside `backend_2/.ignore/` and name it `shell-hacks-2022-181a9f806470.json`.
+You'll need a `json` identifier for the project. It needs to come from the GCP key manager.
+Place it inside `backend_2/.ignore/` and name it `shell-hacks-2022-181a9f806470.json`.
 Then head to `localhost:8080/test.html`, feed any file and a target language (es, en, ru, it, ...)
-Hit submit and play the downloaded file
+Hit submit and play the downloaded file. It's only the test file given by GCP since the billing keeps messing up
 ##### What we need from the user:
 1. Audio file
 2. Target language
