@@ -17,19 +17,19 @@ function App() {
       <body>
 
       
-       <div class="grid grid-cols-3 gap-2 place-content-center h-48 ...">
+       <div class="grid grid-cols-3 gap-2 place-content-center h-screen">
         
-         <div class="pl-96"> <button class="bg-white hover:bg-sky-700 ">Translate</button>
+         <div class="pl-64"> <button class="bg-white hover:bg-sky-700 h-16 w-60 rounded-lg">Translate</button>
         
            </div>
         
       
-         <div class = "pl-60 text-white font-bold text-3xl"> or 
+         <div class = "pl-56 text-white font-bold text-3xl"> or 
          </div>
         
         
         
-         <div class = "pl-12"> <button class="bg-white hover:bg-sky-700 ">Simplify</button></div>
+         <div class = "p-0"> <button class="bg-white hover:bg-sky-700 h-16 w-60 rounded-lg">Simplify</button></div>
 
        </div>
        
