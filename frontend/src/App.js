@@ -17,26 +17,31 @@ function App() {
       <body>
 
       
- 
-        <div class="grid grid-cols-2 gap-1 place-content-between h-48">
-          <div>
-              <button class="bg-white hover:bg-sky-700">Translate</button>
-
-            </div>
-
-          <div>
-            <button class="bg-white hover:bg-sky-700 ">Simplify</button>
-
-            </div>
-
-        </div>
+       <div class="grid grid-cols-3 gap-2 place-content-center h-48 ...">
         
-        </body>
+         <div class="pl-96"> <button class="bg-white hover:bg-sky-700 ">Translate</button>
+        
+           </div>
+        
       
-      
-      
+         <div class = "pl-60 text-white font-bold text-3xl"> or 
+         </div>
+        
+        
+        
+         <div class = "pl-12"> <button class="bg-white hover:bg-sky-700 ">Simplify</button></div>
 
+       </div>
+       
+
+
+      </body>
+
+      
+    
     </div>
+
+    
   );
 }
 
