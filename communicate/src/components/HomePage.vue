@@ -10,8 +10,24 @@
         <v-select :items="languages" label="Language" id="l2"></v-select>
       </div>
     </div>
-    
-    <button @click="toggleRecord" class="recorder" id="button"></button>
+
+    <button @click="toggleRecord" class="recorder" id="button" />
+    <button @click="flipArrow" class="direction" id="arrow">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="w-6 h-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5"
+        />
+      </svg>
+    </button>
   </div>
 </template>
 
@@ -19,48 +35,47 @@
 // import { ref } from 'vue';
 
 export default {
-  name: 'HomePage',
+  name: "HomePage",
   setup() {
     let ready = false;
     let recording = false;
     let turn = true;
     let mediaRecorder;
     let audioChunks = [];
-    
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        ready = true;
-        mediaRecorder = new MediaRecorder(stream);
-       
-        mediaRecorder.addEventListener("dataavailable", event => {
-          audioChunks.push(event.data);
-        });
-        
-        let l1 = document.getElementById("l1");
-        let l2 = document.getElementById("l2");
-        // console.log(l1.value, l2.value)
-        
-        mediaRecorder.addEventListener("stop", () => {
-          const audioBlob = new Blob(audioChunks, { 'type': 'audio/mp3' });
-          const formData = new FormData();
-          formData.append('file', audioBlob)
-          formData.append('fromLang', turn ? l1.value : l2.value);
-          formData.append('target', turn ? l2.value : l1.value);
-          fetch('http://localhost:8081/translate/stts', {
-            method: 'POST',
-            body: formData
-          }).then(async (res) => {
-            const url = window.URL.createObjectURL(await res.blob());
-            new Audio(url).play()
-          });
-          turn = !turn;
-        });
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      ready = true;
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.addEventListener("dataavailable", (event) => {
+        audioChunks.push(event.data);
       });
-    
+
+      let l1 = document.getElementById("l1");
+      let l2 = document.getElementById("l2");
+      // console.log(l1.value, l2.value)
+
+      mediaRecorder.addEventListener("stop", () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        const formData = new FormData();
+        formData.append("file", audioBlob);
+        formData.append("fromLang", turn ? l1.value : l2.value);
+        formData.append("target", turn ? l2.value : l1.value);
+        fetch("http://localhost:8081/translate/stts", {
+          method: "POST",
+          body: formData,
+        }).then(async (res) => {
+          const url = window.URL.createObjectURL(await res.blob());
+          new Audio(url).play();
+        });
+        turn = !turn;
+      });
+    });
+
     const toggleRecord = () => {
       if (ready) {
         recording = !recording;
-        document.getElementById("button").classList.toggle('square');
+        document.getElementById("button").classList.toggle("square");
         if (recording) {
           audioChunks = [];
           mediaRecorder.start();
@@ -68,8 +83,11 @@ export default {
           mediaRecorder.stop();
         }
       }
-    }
+    };
 
+    const flipArrow = () => {
+      document.getElementById("arrow").classList.toggle("flip");
+    };
 
     let languages = [
       "af",
@@ -115,24 +133,23 @@ export default {
       "th",
       "tr",
       "uk",
-      "vi"
+      "vi",
     ];
-    return { languages, toggleRecord };
+    return { languages, toggleRecord, flipArrow };
   },
   // mounted() {
-    // let rec = document.createElement('script')
-    // rec.setAttribute('src', 'https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js')
-    // document.head.appendChild(rec)
+  // let rec = document.createElement('script')
+  // rec.setAttribute('src', 'https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js')
+  // document.head.appendChild(rec)
   // },
-
-}
+};
 </script>
 
 <style scoped>
 .full {
   width: 100%;
   height: 100%;
-  background: #E09F3E;
+  background: #e09f3e;
   color: white;
 }
 
@@ -143,7 +160,7 @@ export default {
 }
 
 .blue {
-  background: #335C67;
+  background: #335c67;
 }
 
 .v-input {
@@ -160,7 +177,7 @@ export default {
 }
 
 .recorder {
-  background: #9E2A2B;
+  background: #9e2a2b;
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -170,10 +187,28 @@ export default {
   z-index: 2;
   border: 5px solid white;
   transform: translate(-50%);
-  transition: border-radius .5s;
+  transition: border-radius 0.5s;
 }
 
 .square {
   border-radius: 10px !important;
+}
+
+.direction {
+  opacity: 0.8;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: auto;
+  margin-bottom: auto;
+  height: clamp(30px, 3rem, 50px);
+  width: clamp(30px, 3rem, 50px);
+  transform: translateX(-50%) rotateZ(0deg);
+  transition: transform 0.5s;
+}
+
+.flip {
+  transform: translateX(-50%) rotateZ(-180deg);
+  transition: transform 0.5s;
 }
 </style>
