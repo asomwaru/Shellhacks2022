@@ -5,7 +5,9 @@ function App() {
   return (
     <div className="bg-slate-900  min-h-screen">
       <header className="">
+        
         <h1 className='text-white font-bold text-3xl'>Gibbrish</h1>
+        
       </header>
       <body>
 
@@ -18,6 +20,7 @@ function App() {
       </body>
       
       
+
     </div>
   );
 }
