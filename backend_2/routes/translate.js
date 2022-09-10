@@ -14,7 +14,7 @@ DONE:
 */
 //=======
 
-const uuidv4 = require("uuid");
+const { v4: uuidv4 } = require('uuid');
 
 const express = require("express");
 const router = express.Router();
@@ -22,13 +22,13 @@ const router = express.Router();
 const { translate, stt, tts, storage } = require("../gcp/index");
 
 // aux just in case we need it later
-/*
-async function createBucket() {
-  // Creates the new bucket
-  await storage.createBucket(bucketName);
-  console.log(`Bucket ${bucketName} created.`);
-}
-*/
+
+// async function createBucket() {
+//   // Creates the new bucket
+//   await storage.createBucket(bucketName);
+//   console.log(`Bucket ${bucketName} created.`);
+// }
+// createBucket();
 
 function getRouter() {
   // converts speech to text
@@ -106,44 +106,40 @@ async function getTranscript(fromLang, file) {
   // worst comes to worst we only allow mp3
   
   // upload file to gcs. needs to be tested
-  /*
-  const bucketName = 'audio-files';
-  const filePath = process.cwd() + '/gcp/test.txt';
+  
+  const bucketName = 'audio-processing-files';
   const destFileName = uuidv4();
   const generationMatchPrecondition = 0;
   
   async function uploadFile() {
-    TODO set TTL
-    const options = {
-      destination: destFileName,
-      preconditionOpts: {ifGenerationMatch: generationMatchPrecondition},
-    };
+    // TODO set TTL
+    const gcsFile = storage.bucket(bucketName).file(destFileName);
+    await gcsFile.save(file.data);
 
-    await storage.bucket(bucketName).upload(filePath, options);
   }
   await uploadFile();
-  */
+  
   
   // run stt to get text
   // TODO: make frequency and encoding modular
   // Also need to test this vvvvv
-  // const gcsUri = 'gs://audio-files/destFileName';
-  const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw';
+  const gcsUri = 'gs://' + bucketName + '/' + destFileName;
 
   // The audio file's encoding, sample rate in hertz, and BCP-47 language code
   const audio = { uri: gcsUri };
   // TODO: make modular
   const config = {
     encoding: 'LINEAR16',
-    sampleRateHertz: 16000,
+    // sampleRateHertz: 16000,
     languageCode: fromLang,
   };
   let request = { audio: audio, config: config };
 
   // Detects speech in the audio file
+  console.log("test")
   let [response] = await stt.recognize(request);
+  console.log("2")
   return response.results.map(res => res.alternatives[0].transcript).join('\n');
-
 }
 
 async function translateTranscript(transcription, target) {
