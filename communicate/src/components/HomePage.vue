@@ -1,52 +1,45 @@
 <template>
   <div class="full">
     <p class="title">Gibbri.sh</p>
-    <p class="large left">Tran</p>
-    <p class="large right">slate</p>
-    <div class="half blue">
+    <p class="large left" :class="turn ? 'gray' : ''">Tran</p>
+    <p class="large right" :class="!turn ? 'gray' : ''">slate</p>
+    <div class="half blue" :class="!turn ? 'gray' : ''">
       <div class="flex">
         <v-select v-model="l1.label" :items="langs" label="Language" id="l1" />
       </div>
     </div>
-    <div class="half">
+    <div class="half" :class="turn ? 'gray' : ''">
       <div class="flex">
         <v-select v-model="l2.label" :items="langs" label="Language" id="l2" />
       </div>
     </div>
 
-    <button
-      @click="toggleRecord"
-      :class="languagesReady ? '' : 'disabled'"
-      class="recorder"
-      id="button"
-    />
-    <button @click="flipArrow" class="direction" id="arrow">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-6 h-6"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5"
-        />
-      </svg>
-    </button>
+    <div class="recorder inner" :class="!languagesReady || waiting  ? 'disabled' : ''"></div>
+    <button @click="toggleRecord"  class="recorder" id="button" />
+    <v-progress-circular :rotate="180"
+          :size="82"
+          :width="5"
+          :model-value="value"
+          color="#9E2A2B"
+          :class="recording ? 'recording' : ''"
+        >
+          </v-progress-circular>
   </div>
 </template>
 
+
 <script setup>
-import { computed, watch, reactive } from "vue";
+import { ref, computed, watch, reactive } from "vue";
 
 let ready = false;
-let recording = false;
-let turn = true;
+const recording = ref(false);
+const turn = ref(true);
 let mediaRecorder;
 let audioChunks = [];
+const waiting = ref(false);
+const value = ref(0);
+
+let interval;
 
 const l1 = reactive({ label: "English", tag: "en" });
 const l2 = reactive({ label: "español", tag: "es" });
@@ -63,37 +56,43 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
     const formData = new FormData();
     formData.append("file", audioBlob);
-    formData.append("fromLang", turn ? l1.tag : l2.tag);
-    formData.append("target", turn ? l2.tag : l1.tag);
+    formData.append("fromLang", turn.value ? l1.tag : l2.tag);
+    formData.append("target", turn.value ? l2.tag : l1.tag);
     fetch("http://localhost:8081/translate/stts", {
       method: "POST",
       body: formData,
     }).then(async (res) => {
       const url = window.URL.createObjectURL(await res.blob());
       new Audio(url).play();
+      waiting.value = false;
+    }).catch((e) => {
+      console.log(e)
     });
-    turn = !turn;
+    turn.value = !(turn.value);
   });
 });
 
 const toggleRecord = () => {
-  console.log(languagesReady.value, l1.value, l2.value);
-  if (ready && languagesReady.value) {
-    recording = !recording;
-    document.getElementById("button").classList.toggle("square");
-    if (recording) {
+  if (ready && languagesReady.value && !waiting.value) {
+    recording.value = !recording.value;
+    document.querySelector(".recorder.inner").classList.toggle("square");
+    if (recording.value) {
+      interval = setInterval(() => {
+        value.value += 2/3;
+        if (value.value >= 100) {
+          clearInterval(interval);
+          toggleRecord();
+        }
+      }, 111)
       audioChunks = [];
       mediaRecorder.start();
     } else {
-      document.getElementById("arrow").classList.toggle("flip");
+      clearInterval(interval);
+      waiting.value = true;
       mediaRecorder.stop();
+      value.value = 0;
     }
   }
-};
-
-const flipArrow = () => {
-  turn = !turn;
-  document.getElementById("arrow").classList.toggle("flip");
 };
 
 const languagesReady = computed(() => {
@@ -161,9 +160,8 @@ watch(l2, () => {
 });
 </script>
 
-<style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap");
-
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap');
 .title {
   font-family: Pacifico, cursive;
   font-size: 32px;
@@ -175,18 +173,20 @@ watch(l2, () => {
 .full {
   width: 100%;
   height: 100%;
-  background: #e09f3e;
+  background: #C15D00;
   color: white;
+  transition: background 1s;
 }
 
 .half {
   display: inline-block;
   width: 50vw;
   height: 100vh;
+  transition: background 1s;
 }
 
 .blue {
-  background: #335c67;
+  background: #023E8A;
 }
 
 .v-input {
@@ -203,20 +203,23 @@ watch(l2, () => {
 }
 
 .recorder {
-  background: #9e2a2b;
+  background: rgba(0,0,0,0);
   width: 80px;
   height: 80px;
   border-radius: 50%;
   position: absolute;
-  bottom: 100px;
+  bottom: 130px;
   left: 50%;
   z-index: 2;
-  border: 5px solid white;
+  border: 3px solid white;
   transform: translate(-50%);
-  transition: border-radius 0.5s;
+  transition: border-radius 0.5s, transform .5s, background .5s;
+  box-shadow: 0px 0px 5px 3px rgba(0,0,0,0.25);
+;
 }
 
 .square {
+  transform: scale(.5) translate(-100%);;
   border-radius: 10px !important;
 }
 
@@ -229,12 +232,12 @@ watch(l2, () => {
   margin-bottom: auto;
   height: 60px;
   width: 60px;
-  transform: translateX(-50%) translateY(-40px) rotateZ(0deg);
+  transform: translateX(-50%) translateY(-40px) rotateY(0deg);
   transition: transform 0.5s;
 }
 
 .flip {
-  transform: translateX(-50%) translateY(-40px) rotateZ(-180deg);
+  transform: translateX(-50%) translateY(-40px) rotateY(-180deg);
   transition: transform 0.5s;
 }
 
@@ -251,16 +254,53 @@ label.v-label.v-field-label {
 }
 
 .left {
-  color: #e09f3e;
+  color: #C15D00;
   left: 42.7%;
 }
 .right {
-  color: #335c67;
+  color: #023E8A;
   left: 50.1%;
 }
 
 .disabled {
-  background: #888;
+  background: #888 !important;
   cursor: default;
+}
+
+.recorder.inner {
+  background: #9E2A2B;
+  height: 70px;
+  width: 70px;
+  border: none;
+  bottom: 135px;
+}
+
+div.gray {
+  background: #999;
+}
+
+p.large {
+  transition: color 1s;
+}
+
+p.gray {
+  color: #999;
+}
+
+.v-progress-circular {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) rotateZ(180deg);
+  bottom: 129px;
+  /*border-radius: 4px;*/
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  
+  transition: opacity .7s;
+}
+
+.v-progress-circular.recording {
+  opacity: 1;
 }
 </style>
