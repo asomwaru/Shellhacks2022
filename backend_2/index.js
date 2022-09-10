@@ -14,13 +14,9 @@ app.use(fileupload());
 // ==========
 
 // cloud functions
-const { translate, speak, ocr, notFound } = require("./routes/index");
+const { translate } = require("./routes/index");
 
 app.use("/translate", translate);
 // ===============
-
-// 404 page
-app.use("/*", notFound);
-// ========
 
 app.listen("8080");

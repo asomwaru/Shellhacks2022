@@ -1,17 +1,3 @@
-// ===========================
-/* GENERAL LOGIC
-
-1. We take in an audio file from the user
-2. The file is uploaded to a bucket so that Google Speech can access it directly
-3. We use Google Speech to convert the GCS file to text (speech-to-text or stt)
-4. We translate the transcript to the target language through the Google Translate API
-5. We pass the translated text to Google TTS
-6. We send the binary from TTS back to the user
-7. Frontend should decide how the binary is utilized (play or download?)
-
-*/
-// ===========================
-
 // TODO:
 /*
 - confirm that bucket uploads work correctly (fix the billing again alex)
@@ -26,6 +12,7 @@ DONE:
 - somehow get a file from the frontend to the backend which i completely forgot how to do
   - at the same time pass in a target language to translate to
 */
+//=======
 
 const uuidv4 = require("uuid");
 
@@ -44,87 +31,62 @@ async function createBucket() {
 */
 
 function getRouter() {
-  router.post("/", async (req, res) => {
-    // get file. pain in the ass but we'll figure it out
-    // const file = req.body.file;
-    
-    // get target language
-    console.log(req.files.file);
-    // we can use req.files.file.encoding to get the encoding for the file
-    // might allow for modular encoding
-    // worst comes to worst we only allow mp3
-    
-    const target = req.body.lang;
-    
-    // upload file to gcs. needs to be tested
-    /*
-    const bucketName = 'audio-files';
-    const filePath = process.cwd() + '/gcp/test.txt';
-    const destFileName = uuidv4();
-    const generationMatchPrecondition = 0;
-    
-    async function uploadFile() {
-      TODO set TTL
-      const options = {
-        destination: destFileName,
-        preconditionOpts: {ifGenerationMatch: generationMatchPrecondition},
-      };
-
-      await storage.bucket(bucketName).upload(filePath, options);
-    }
-    await uploadFile();
-    */
-    
-    // run stt to get text
-    // TODO: make frequency and encoding modular
-    // Also need to test this vvvvv
-    // const gcsUri = 'gs://audio-files/destFileName';
-    const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw';
-
-    // The audio file's encoding, sample rate in hertz, and BCP-47 language code
-    const audio = {
-      uri: gcsUri,
-    };
-    const config = {
-      // TODO: make modular
-      encoding: 'LINEAR16',
-      sampleRateHertz: 16000,
-      languageCode: 'en-US',
-    };
-    let request = {
-      audio: audio,
-      config: config,
-    };
+  // converts speech to text
+  router.post("/st", async (req, res) => {
+    const { fromLang } = req.body;
+    res.status(200).send(await getTranscript(from, req.files.file));
+  });
   
-    // Detects speech in the audio file
-    let [response] = await stt.recognize(request);
-    const transcription = response.results
-      .map(result => result.alternatives[0].transcript)
-      .join('\n');
-
+  // converts speech to text and translates it
+  router.post("/stt", async (req, res) => {
+    const { fromLang, target } = req.body;
+    const transcript = await getTranscript(from, req.files.file);
+    res.status(200).send(await translateTranscript(transcript, target));
+  });
+  
+  // converts speech to text, translates it, and brings back speech
+  router.post("/stts", async (req, res) => {
+    const { fromLang, target } = req.body;
+    const transcript = await getTranscript(fromLang, req.files.file);
     // run translations on transcript
-    const [translation] = await translate.translate(transcription, target);
+    const translation = await translateTranscript(transcript, target);
 
-    // create tts output from translation
-    request = {
-      input: {text: translation},
-      voice: {languageCode: target, ssmlGender: 'NEUTRAL'},
-      // select the type of audio encoding. mp3 works so why not
-      audioConfig: {audioEncoding: 'MP3'},
-    };
-  
-    // Performs the text-to-speech request
-    [response] = await tts.synthesizeSpeech(request);
     
-    // Write the binary audio content to a local file
-    // uncomment if we want to do this for some reason
-    // const fs = require('fs');
-    // const util = require('util');
-    // const writeFile = util.promisify(fs.writeFile);
-    // await writeFile('output.mp3', response.audioContent, 'binary');
-
+    // create tts output from translation
+    const response = await toSpeech(translation, target);
 
     // send back binary data
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Content-disposition': 'attachment;filename=' + 'output.mp3',
+      'Content-Length': response.audioContent.length
+    });
+    res.end(Buffer.from(response.audioContent, 'binary'));
+  });
+  
+  // translates text
+  router.post("/tt", async (req, res) => {
+    const { target, transcript } = req.body;
+    res.status(200).send(await translateTranscript(transcript, target));
+  });
+  
+  // translates text and converts it to speech
+  router.post("/tts", async (req, res) => {
+    const { target, transcript } = req.body;
+    const translation = await translateTranscript(transcript, target);
+    const response = await toSpeech(translation, target);
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Content-disposition': 'attachment;filename=' + 'output.mp3',
+      'Content-Length': response.audioContent.length
+    });
+    res.end(Buffer.from(response.audioContent, 'binary'));
+  });
+  
+  //converts text to speech
+  router.post("/ts", async (req, res) => {
+    const { target, transcript } = req.body;
+    const response = await toSpeech(translation, target);
     res.writeHead(200, {
       'Content-Type': 'audio/mpeg',
       'Content-disposition': 'attachment;filename=' + 'output.mp3',
@@ -137,3 +99,63 @@ function getRouter() {
 }
 
 module.exports = getRouter;
+
+async function getTranscript(fromLang, file) {
+  // we can use req.files.file.encoding to get the encoding for the file
+  // might allow for modular encoding
+  // worst comes to worst we only allow mp3
+  
+  // upload file to gcs. needs to be tested
+  /*
+  const bucketName = 'audio-files';
+  const filePath = process.cwd() + '/gcp/test.txt';
+  const destFileName = uuidv4();
+  const generationMatchPrecondition = 0;
+  
+  async function uploadFile() {
+    TODO set TTL
+    const options = {
+      destination: destFileName,
+      preconditionOpts: {ifGenerationMatch: generationMatchPrecondition},
+    };
+
+    await storage.bucket(bucketName).upload(filePath, options);
+  }
+  await uploadFile();
+  */
+  
+  // run stt to get text
+  // TODO: make frequency and encoding modular
+  // Also need to test this vvvvv
+  // const gcsUri = 'gs://audio-files/destFileName';
+  const gcsUri = 'gs://cloud-samples-data/speech/brooklyn_bridge.raw';
+
+  // The audio file's encoding, sample rate in hertz, and BCP-47 language code
+  const audio = { uri: gcsUri };
+  // TODO: make modular
+  const config = {
+    encoding: 'LINEAR16',
+    sampleRateHertz: 16000,
+    languageCode: fromLang,
+  };
+  let request = { audio: audio, config: config };
+
+  // Detects speech in the audio file
+  let [response] = await stt.recognize(request);
+  return response.results.map(res => res.alternatives[0].transcript).join('\n');
+
+}
+
+async function translateTranscript(transcription, target) {
+  return await translate.translate(transcription, target);
+}
+
+async function toSpeech(translation, target) {
+  const request = {
+    input: { text: translation },
+    voice: { languageCode: target, ssmlGender: 'NEUTRAL' },
+    // select the type of audio encoding. mp3 works so why not
+    audioConfig: { audioEncoding: 'MP3' },
+  };
+  return (await tts.synthesizeSpeech(request))[0];
+}

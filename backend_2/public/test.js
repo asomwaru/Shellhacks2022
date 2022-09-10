@@ -3,11 +3,13 @@ uploadForm.addEventListener('submit', function(e) {
   
   e.preventDefault()
   let file = e.target.uploadFile.files[0]
-  let lang = e.target.lang.value
+  let fromLang = e.target.fromLang.value
+  let target = e.target.target.value
   let formData = new FormData()
   formData.append('file', file)
-  formData.append('lang', lang)
-  fetch('/translate', {
+  formData.append('fromLang', fromLang)
+  formData.append('target', target)
+  fetch('/translate/stts', {
     method: 'POST',
     body: formData
   }).then(async (res) => {
