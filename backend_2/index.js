@@ -2,15 +2,15 @@ const express = require("express");
 const app = express();
 
 // middleware
-const helmet     = require("helmet");
+const helmet = require("helmet");
 const bodyParser = require("body-parser");
 const fileupload = require("express-fileupload");
-const cors       = require("cors");
+const cors = require("cors");
 
 app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(express.static(process.cwd() + '/public'));
+app.use(express.static(process.cwd() + "/public"));
 app.use(fileupload());
 app.use(cors());
 // ==========
