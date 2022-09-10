@@ -5,16 +5,21 @@
     <p class="large right">slate</p>
     <div class="half blue">
       <div class="flex">
-        <v-select :items="languages" label="Language" v-model="l1" id="l1"></v-select>
+        <v-select v-model="l1.label" :items="langs" label="Language" id="l1" />
       </div>
     </div>
     <div class="half">
       <div class="flex">
-        <v-select :items="languages" label="Language" v-model="l2" id="l2"></v-select>
+        <v-select v-model="l2.label" :items="langs" label="Language" id="l2" />
       </div>
     </div>
 
-    <button @click="toggleRecord" :class="languagesReady ? '' : 'disabled'" class="recorder" id="button" />
+    <button
+      @click="toggleRecord"
+      :class="languagesReady ? '' : 'disabled'"
+      class="recorder"
+      id="button"
+    />
     <button @click="flipArrow" class="direction" id="arrow">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -35,7 +40,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, watch, reactive } from "vue";
 
 let ready = false;
 let recording = false;
@@ -43,8 +48,8 @@ let turn = true;
 let mediaRecorder;
 let audioChunks = [];
 
-const l1 = ref('en');
-const l2 = ref('es');
+const l1 = reactive({ label: "English", tag: "en" });
+const l2 = reactive({ label: "español", tag: "es" });
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
   ready = true;
@@ -58,8 +63,8 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
     const formData = new FormData();
     formData.append("file", audioBlob);
-    formData.append("fromLang", turn ? l1.value : l2.value);
-    formData.append("target", turn ? l2.value : l1.value);
+    formData.append("fromLang", turn ? l1.tag : l2.tag);
+    formData.append("target", turn ? l2.tag : l1.tag);
     fetch("http://localhost:8081/translate/stts", {
       method: "POST",
       body: formData,
@@ -92,7 +97,7 @@ const flipArrow = () => {
 };
 
 const languagesReady = computed(() => {
-  return l1.value !== '' && l2.value !== '';
+  return l1.value !== "" && l2.value !== "";
 });
 
 let languages = [
@@ -140,11 +145,24 @@ let languages = [
   "tr",
   "uk",
   "vi",
-];
+].map((item) => ({
+  label: new Intl.DisplayNames([item], { type: "language" }).of(item),
+  tag: item,
+}));
+
+const langs = languages.map((item) => item.label);
+
+watch(l1, () => {
+  l1.tag = languages.filter((item) => item.label === l1.label)[0].tag;
+});
+
+watch(l2, () => {
+  l2.tag = languages.filter((item) => item.label === l2.label)[0].tag;
+});
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap");
 
 .title {
   font-family: Pacifico, cursive;
