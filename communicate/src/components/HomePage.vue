@@ -1,18 +1,20 @@
 <template>
   <div class="full">
     <p class="title">Gibbri.sh</p>
+    <p class="large left">Tran</p>
+    <p class="large right">slate</p>
     <div class="half blue">
       <div class="flex">
-        <v-select :items="languages" label="Language" value="en" id="l1"></v-select>
+        <v-select :items="languages" label="Language" v-model="l1" id="l1"></v-select>
       </div>
     </div>
     <div class="half">
       <div class="flex">
-        <v-select :items="languages" label="Language" value="es" id="l2"></v-select>
+        <v-select :items="languages" label="Language" v-model="l2" id="l2"></v-select>
       </div>
     </div>
 
-    <button @click="toggleRecord" class="recorder" id="button" />
+    <button @click="toggleRecord" :class="languagesReady ? '' : 'disabled'" class="recorder" id="button" />
     <button @click="flipArrow" class="direction" id="arrow">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -32,120 +34,113 @@
   </div>
 </template>
 
-<script>
-// import { ref } from 'vue';
+<script setup>
+import { computed, ref } from 'vue';
 
-export default {
-  name: "HomePage",
-  setup() {
-    let ready = false;
-    let recording = false;
-    let turn = true;
-    let mediaRecorder;
-    let audioChunks = [];
+let ready = false;
+let recording = false;
+let turn = true;
+let mediaRecorder;
+let audioChunks = [];
 
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      ready = true;
-      mediaRecorder = new MediaRecorder(stream);
+const l1 = ref('en');
+const l2 = ref('es');
 
-      mediaRecorder.addEventListener("dataavailable", (event) => {
-        audioChunks.push(event.data);
-      });
+navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+  ready = true;
+  mediaRecorder = new MediaRecorder(stream);
 
-      let l1 = document.getElementById("l1");
-      let l2 = document.getElementById("l2");
-      // console.log(l1.value, l2.value)
+  mediaRecorder.addEventListener("dataavailable", (event) => {
+    audioChunks.push(event.data);
+  });
 
-      mediaRecorder.addEventListener("stop", () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-        const formData = new FormData();
-        formData.append("file", audioBlob);
-        formData.append("fromLang", turn ? l1.value : l2.value);
-        formData.append("target", turn ? l2.value : l1.value);
-        fetch("http://localhost:8081/translate/stts", {
-          method: "POST",
-          body: formData,
-        }).then(async (res) => {
-          const url = window.URL.createObjectURL(await res.blob());
-          new Audio(url).play();
-        });
-        turn = !turn;
-      });
+  mediaRecorder.addEventListener("stop", () => {
+    const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+    const formData = new FormData();
+    formData.append("file", audioBlob);
+    formData.append("fromLang", turn ? l1.value : l2.value);
+    formData.append("target", turn ? l2.value : l1.value);
+    fetch("http://localhost:8081/translate/stts", {
+      method: "POST",
+      body: formData,
+    }).then(async (res) => {
+      const url = window.URL.createObjectURL(await res.blob());
+      new Audio(url).play();
     });
+    turn = !turn;
+  });
+});
 
-    const toggleRecord = () => {
-      if (ready) {
-        recording = !recording;
-        document.getElementById("button").classList.toggle("square");
-        if (recording) {
-          audioChunks = [];
-          mediaRecorder.start();
-        } else {
-          document.getElementById("arrow").classList.toggle("flip");
-          mediaRecorder.stop();
-        }
-      }
-    };
-
-    const flipArrow = () => {
-      turn = !turn;
+const toggleRecord = () => {
+  console.log(languagesReady.value, l1.value, l2.value);
+  if (ready && languagesReady.value) {
+    recording = !recording;
+    document.getElementById("button").classList.toggle("square");
+    if (recording) {
+      audioChunks = [];
+      mediaRecorder.start();
+    } else {
       document.getElementById("arrow").classList.toggle("flip");
-    };
-
-    let languages = [
-      "af",
-      "ar",
-      "bn",
-      "bg",
-      "ca",
-      "yue",
-      "cs",
-      "da",
-      "nl",
-      "en",
-      "fil",
-      "fi",
-      "fr",
-      "de",
-      "el",
-      "gu",
-      "hi",
-      "hu",
-      "is",
-      "id",
-      "it",
-      "ja",
-      "kn",
-      "ko",
-      "lv",
-      "ms",
-      "ml",
-      "cmn",
-      "nb",
-      "pl",
-      "pt",
-      "pa",
-      "ro",
-      "ru",
-      "sr",
-      "sk",
-      "es",
-      "sv",
-      "ta",
-      "te",
-      "th",
-      "tr",
-      "uk",
-      "vi",
-    ];
-    return { languages, toggleRecord, flipArrow };
-  },
-  // mounted() {
-  // let rec = document.createElement('script')
-  // rec.setAttribute('src', 'https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js')
-  // document.head.appendChild(rec)
-  // },
+      mediaRecorder.stop();
+    }
+  }
 };
+
+const flipArrow = () => {
+  turn = !turn;
+  document.getElementById("arrow").classList.toggle("flip");
+};
+
+const languagesReady = computed(() => {
+  return l1.value !== '' && l2.value !== '';
+});
+
+let languages = [
+  "af",
+  "ar",
+  "bn",
+  "bg",
+  "ca",
+  "yue",
+  "cs",
+  "da",
+  "nl",
+  "en",
+  "fil",
+  "fi",
+  "fr",
+  "de",
+  "el",
+  "gu",
+  "hi",
+  "hu",
+  "is",
+  "id",
+  "it",
+  "ja",
+  "kn",
+  "ko",
+  "lv",
+  "ms",
+  "ml",
+  "cmn",
+  "nb",
+  "pl",
+  "pt",
+  "pa",
+  "ro",
+  "ru",
+  "sr",
+  "sk",
+  "es",
+  "sv",
+  "ta",
+  "te",
+  "th",
+  "tr",
+  "uk",
+  "vi",
+];
 </script>
 
 <style scoped>
@@ -227,5 +222,27 @@ export default {
 
 label.v-label.v-field-label {
   transform: translateY(-5px);
+}
+
+.large {
+  font-size: 50px;
+  position: absolute;
+  top: 20%;
+  /*left: 50%;*/
+  /*transform: translateX(-50%);*/
+}
+
+.left {
+  color: #e09f3e;
+  left: 42.7%;
+}
+.right {
+  color: #335c67;
+  left: 50.1%;
+}
+
+.disabled {
+  background: #888;
+  cursor: default;
 }
 </style>
