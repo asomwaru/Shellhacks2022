@@ -18,6 +18,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const express = require("express");
 const router = express.Router();
+const ffmpeg = require("ffmpeg");
 
 const { translate, stt, tts, storage } = require("../gcp/index");
 
@@ -47,7 +48,10 @@ function getRouter() {
   // converts speech to text, translates it, and brings back speech
   router.post("/stts", async (req, res) => {
     const { fromLang, target } = req.body;
+    console.log(req.body);
+    console.log(req.files);
     const transcript = await getTranscript(fromLang, req.files.file);
+    console.log(transcript);
     // run translations on transcript
     const translation = await translateTranscript(transcript, target);
 
@@ -100,6 +104,8 @@ function getRouter() {
 
 module.exports = getRouter;
 
+const fs = require('fs').promises;
+
 async function getTranscript(fromLang, file) {
   // we can use req.files.file.encoding to get the encoding for the file
   // might allow for modular encoding
@@ -107,6 +113,29 @@ async function getTranscript(fromLang, file) {
   
   // upload file to gcs. needs to be tested
   
+  let data;
+  
+  if (file.name === "blob") {
+    try {
+      const uuid = uuidv4();
+      await fs.writeFile("./" + uuid + ".mp3", file.data);
+      await fs.readFile("./" + uuid + ".mp3");
+      let process = await new ffmpeg("./" + uuid + '.mp3');
+      
+      await new Promise((resolve, reject) => {
+        try {
+          resolve(process.fnExtractSoundToMP3("./" + uuid + '_new.mp3'));
+        } catch(err) {
+          reject(err);
+        }
+      });
+      let d = await fs.readFile("./" + uuid + '_new.mp3');
+      data = d;
+      fs.unlink('./' + uuid +'_new.mp3', () => {});
+      fs.unlink('./' + uuid +'.mp3', () => {});
+    } catch (e) { console.log(e) }
+  }
+
   const bucketName = 'audio-processing-files';
   const destFileName = uuidv4();
   const generationMatchPrecondition = 0;
@@ -114,7 +143,7 @@ async function getTranscript(fromLang, file) {
   async function uploadFile() {
     // TODO set TTL
     const gcsFile = storage.bucket(bucketName).file(destFileName);
-    await gcsFile.save(file.data);
+    await gcsFile.save(data ?? file.data);
 
   }
   await uploadFile();
@@ -129,17 +158,16 @@ async function getTranscript(fromLang, file) {
   const audio = { uri: gcsUri };
   // TODO: make modular
   const config = {
-    encoding: 'LINEAR16',
-    // sampleRateHertz: 16000,
+    encoding: 'mp3',
+    sampleRateHertz: 16000,
     languageCode: fromLang,
   };
   let request = { audio: audio, config: config };
 
   // Detects speech in the audio file
-  console.log("test")
   let [response] = await stt.recognize(request);
-  console.log("2")
-  return response.results.map(res => res.alternatives[0].transcript).join('\n');
+  let transcript = response.results.map(res => res.alternatives[0].transcript).join('\n');
+  return transcript;
 }
 
 async function translateTranscript(transcription, target) {
@@ -147,8 +175,9 @@ async function translateTranscript(transcription, target) {
 }
 
 async function toSpeech(translation, target) {
+  console.log("translation:", translation[0])
   const request = {
-    input: { text: translation },
+    input: { text: translation[0] },
     voice: { languageCode: target, ssmlGender: 'NEUTRAL' },
     // select the type of audio encoding. mp3 works so why not
     audioConfig: { audioEncoding: 'MP3' },

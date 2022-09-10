@@ -13,8 +13,10 @@
     "@google-cloud/storage": "^6.4.2",
     "@google-cloud/text-to-speech": "^4.0.2",
     "@google-cloud/translate": "^7.0.2",
+    "cors": "^2.8.5",
     "express": "^4.18.1",
     "express-fileupload": "^1.4.0",
+    "ffmpeg": "^0.0.4",
     "helmet": "^6.0.0",
     "uuid": "^9.0.0"
   }
