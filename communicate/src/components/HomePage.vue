@@ -1,6 +1,6 @@
 <template>
   <div class="full">
-    <p class="title">Gibbri.sh</p>
+    <p class="title" :class="turn ? 'gray' : ''">Gibbri.sh</p>
     <p class="large left" :class="turn ? 'gray' : ''">Tran</p>
     <p class="large right" :class="!turn ? 'gray' : ''">slate</p>
     <div class="half blue" :class="!turn ? 'gray' : ''">
@@ -41,7 +41,7 @@
     </svg>
 
 
-    <svg @click="play(LATEST_URL)" :class="!turn ? 'gray' : ''"
+    <svg @click="play(LATEST_URL)" :class="!  turn ? 'gray' : ''"
       xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" id="redo" class="w-6 h-6">
       <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
     </svg>
@@ -201,6 +201,8 @@ watch(l2, () => {
   position: absolute;
   top: 15px;
   left: 25px;
+  color: black;
+  transition: color 1s;
 }
 
 .full {
@@ -288,11 +290,11 @@ label.v-label.v-field-label {
 
 .left {
   color: #C15D00;
-  left: 42.5%;
+  left: 42.6%;
 }
 .right {
   color: #023E8A;
-  left: 50.1%;
+  left: 50.3%;
 }
 
 .disabled {
@@ -364,5 +366,9 @@ p.gray {
 
 #flip.gray, #redo.gray {
   color: #999;
+}
+
+.title.gray {
+  color: white;
 }
 </style>
