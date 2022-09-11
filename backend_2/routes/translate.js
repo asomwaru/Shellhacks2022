@@ -51,8 +51,14 @@ function getRouter() {
       return next(new Error("No file attached"));
     }
 
+
     const transcript = await getTranscript(fromLang, req.files.file);
-    res.status(200).send(await translateTranscript(transcript, target));
+    console.log(transcript)
+
+    res.status(200).json({
+      "transcript": transcript,
+      "translation": await translateTranscript(transcript, target)
+    });
   });
 
   // converts speech to text, translates it, and brings back speech
