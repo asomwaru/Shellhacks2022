@@ -20,7 +20,7 @@ const { translate } = require("./routes/index");
 
 app.use("/translate", translate);
 app.use("/*", (req, res, next, err) => {
-  console.log(err);
+  console.error(err());
 });
 // ===============
 
