@@ -8,6 +8,8 @@ steps:
   entrypoint: npm
   args: ["run", "build"]
 - name: "gcr.io/cloud-builders/gcloud"
+  env:
+  - 'VUE_APP_REMOTE_ADDRESS=34.148.116.100:8081'
   dir: "communicate"
   args: ["app", "deploy"]
 timeout: "1600s"

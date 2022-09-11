@@ -6,7 +6,12 @@
     <div class="half blue" :class="!turn ? 'gray' : ''">
       <div class="flex">
         <div class="wrapper left">
-          <v-select v-model="l1.label" :items="langs" label="Language" id="l1" />
+          <v-select
+            v-model="l1.label"
+            :items="langs"
+            label="Language"
+            id="l1"
+          />
           <p id="o1">{{ o1 }}</p>
         </div>
       </div>
@@ -14,23 +19,31 @@
     <div class="half" :class="turn ? 'gray' : ''">
       <div class="flex">
         <div class="wrapper right">
-          <v-select v-model="l2.label" :items="langs" label="Language" id="l2" />
+          <v-select
+            v-model="l2.label"
+            :items="langs"
+            label="Language"
+            id="l2"
+          />
           <p id="o2">{{ o2 }}</p>
         </div>
       </div>
     </div>
 
-    <div class="recorder inner" :class="!languagesReady || waiting  ? 'disabled' : ''"></div>
-    <button @click="toggleRecord"  class="recorder" id="button" />
-    <v-progress-circular :rotate="180"
-          :size="82"
-          :width="5"
-          :model-value="value"
-          color="#9E2A2B"
-          :class="recording ? 'recording' : ''"
-        >
-          </v-progress-circular>
-          
+    <div
+      class="recorder inner"
+      :class="!languagesReady || waiting ? 'disabled' : ''"
+    ></div>
+    <button @click="toggleRecord" class="recorder" id="button" />
+    <v-progress-circular
+      :rotate="180"
+      :size="82"
+      :width="5"
+      :model-value="value"
+      color="#9E2A2B"
+      :class="recording ? 'recording' : ''"
+    />
+
     <v-progress-circular
       class="recording"
       :rotate="180"
@@ -39,23 +52,48 @@
       indeterminate
       color="#9E2A2B"
       :class="waiting ? '' : 'no-op'"
-    ></v-progress-circular>
+    />
 
-    <svg @click="flip" :class="turn ? 'gray' : ''"
-      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" id="flip" class="w-6 h-6">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+    <svg
+      @click="flip"
+      :class="turn ? 'gray' : ''"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      id="flip"
+      class="w-6 h-6"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
+      />
     </svg>
 
-
-    <svg @click="play(LATEST_URL)" :class="!  turn ? 'gray' : ''"
-      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" id="redo" class="w-6 h-6">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    <svg
+      @click="play(LATEST_URL)"
+      :class="!turn ? 'gray' : ''"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="2"
+      stroke="currentColor"
+      id="redo"
+      class="w-6 h-6"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+      />
     </svg>
   </div>
 </template>
 
-
 <script setup>
+import { process } from "ipaddr.js";
 import { ref, computed, watch, reactive } from "vue";
 
 let ready = false;
@@ -71,10 +109,10 @@ let interval;
 const l1 = reactive({ label: "English", tag: "en" });
 const l2 = reactive({ label: "Español", tag: "es" });
 
-const o1 = ref('');
-const o2 = ref('');
+const o1 = ref("");
+const o2 = ref("");
 
-const LATEST_URL = ref('');
+const LATEST_URL = ref("");
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
   ready = true;
@@ -90,27 +128,35 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     formData.append("file", audioBlob);
     formData.append("fromLang", turn.value ? l1.tag : l2.tag);
     formData.append("target", turn.value ? l2.tag : l1.tag);
-    
-    let texts = await (await fetch("http://localhost:8081/translate/stt", {
-      method: "POST",
-      body: formData,
-    })).json();
-    
+
+    let texts = await (
+      await fetch(
+        `http://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stt`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      )
+    ).json();
+
     console.log(texts, turn);
-    
+
     // eslint-disable-next-line
     o1.value = turn.value ? texts.transcript : texts.translation[0];
     // eslint-disable-next-line
     o2.value = turn.value ? texts.translation[0] : texts.transcript;
-    
-    let audio = await fetch("http://localhost:8081/translate/stts", {
-      method: "POST",
-      body: formData,
-    });
+
+    let audio = await fetch(
+      `http://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stts`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
     LATEST_URL.value = window.URL.createObjectURL(await audio.blob());
     play(LATEST_URL.value);
     waiting.value = false;
-    turn.value = !(turn.value);
+    turn.value = !turn.value;
     waiting.value = false;
   });
 });
@@ -121,12 +167,12 @@ const toggleRecord = () => {
     document.querySelector(".recorder.inner").classList.toggle("square");
     if (recording.value) {
       interval = setInterval(() => {
-        value.value += 2/3;
+        value.value += 2 / 3;
         if (value.value >= 100) {
           clearInterval(interval);
           toggleRecord();
         }
-      }, 111)
+      }, 111);
       audioChunks = [];
       mediaRecorder.start();
     } else {
@@ -196,7 +242,9 @@ let languages = [
   "uk",
   "vi",
 ].map((item) => ({
-  label: capitalizeFirst(new Intl.DisplayNames([item], { type: "language" }).of(item)),
+  label: capitalizeFirst(
+    new Intl.DisplayNames([item], { type: "language" }).of(item)
+  ),
   tag: item,
 }));
 
@@ -216,7 +264,7 @@ watch(l2, () => {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap");
 body {
   overflow: hidden;
   font-family: Montserrat;
@@ -235,7 +283,7 @@ body {
 .full {
   width: 100%;
   height: 100%;
-  background: #C15D00;
+  background: #c15d00;
   color: white;
   transition: background 1s;
 }
@@ -248,11 +296,11 @@ body {
 }
 
 .blue {
-  background: #023E8A;
+  background: #023e8a;
 }
 
 .recorder {
-  background: rgba(0,0,0,0);
+  background: rgba(0, 0, 0, 0);
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -262,13 +310,12 @@ body {
   z-index: 2;
   border: 3px solid white;
   transform: translate(-50%);
-  transition: border-radius 0.5s, transform .5s, background .5s;
-  box-shadow: 0px 0px 5px 3px rgba(0,0,0,0.25);
-;
+  transition: border-radius 0.5s, transform 0.5s, background 0.5s;
+  box-shadow: 0px 0px 5px 3px rgba(0, 0, 0, 0.25);
 }
 
 .square {
-  transform: scale(.5) translate(-100%);;
+  transform: scale(0.5) translate(-100%);
   border-radius: 10px !important;
 }
 
@@ -290,11 +337,11 @@ label.v-label.v-field-label {
 }
 
 .left {
-  color: #C15D00;
+  color: #c15d00;
   right: 50.2%;
 }
 .right {
-  color: #023E8A;
+  color: #023e8a;
   left: 50.3%;
 }
 
@@ -304,7 +351,7 @@ label.v-label.v-field-label {
 }
 
 .recorder.inner {
-  background: #9E2A2B;
+  background: #9e2a2b;
   height: 70px;
   width: 70px;
   border: none;
@@ -332,8 +379,8 @@ p.gray {
   z-index: 5;
   opacity: 0;
   pointer-events: none;
-  
-  transition: opacity .7s;
+
+  transition: opacity 0.7s;
 }
 
 .v-progress-circular.recording {
@@ -350,7 +397,7 @@ p.gray {
   left: 58%;
   cursor: pointer;
   width: 60px;
-  color: #023E8A;
+  color: #023e8a;
   transition: color 1s;
 }
 
@@ -360,12 +407,13 @@ p.gray {
   left: 38.5%;
   cursor: pointer;
   width: 60px;
-  color: #C15D00;
-  transition: color ;
+  color: #c15d00;
+  transition: color;
   transition: color 1s;
 }
 
-#flip.gray, #redo.gray {
+#flip.gray,
+#redo.gray {
   color: #999;
 }
 
@@ -392,14 +440,15 @@ p.gray {
   color: white;
 }
 
-#o1, #o2 {
+#o1,
+#o2 {
   color: white;
   padding: 60px 17px 10px 17px;
   position: absolute;
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255,255,255,.1);
+  background: rgba(255, 255, 255, 0.1);
   display: inline-block;
   border-radius: 0 0 10px 10px;
 }
@@ -411,8 +460,7 @@ p.gray {
   bottom: 270px;
   height: 260px;
   /*background: red;*/
-  box-shadow: 0px 0px 20px 3px rgba(0,0,0,0.2);
-  
+  box-shadow: 0px 0px 20px 3px rgba(0, 0, 0, 0.2);
 }
 .wrapper.right {
   right: 1%;
