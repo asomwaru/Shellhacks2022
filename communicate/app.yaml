@@ -2,8 +2,8 @@ runtime: nodejs16
 handlers:
   # Serve all static files with urls ending with a file extension
 - url: /(.*\..+)$ 
-  static_files: dist/\1
-  upload: dist/(.*\..+)$  # catch all handler to index.html
+  static_files: communicate/dist/\1
+  upload: communicate/dist/(.*\..+)$  # catch all handler to index.html
 - url: /.*
-  static_files: dist/index.html
-  upload: dist/index.html
+  static_files: communicate/dist/index.html
+  upload: communicate/dist/index.html

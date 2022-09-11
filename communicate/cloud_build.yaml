@@ -1,5 +1,6 @@
 steps:
 - name: node:16.17.0
+  dir: "communicate"
   entrypoint: npm
   args: ["install"]
 - name: node:16.17.0
