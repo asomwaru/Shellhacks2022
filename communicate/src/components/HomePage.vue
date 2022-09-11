@@ -259,7 +259,7 @@ label.v-label.v-field-label {
 
 .left {
   color: #C15D00;
-  left: 42.7%;
+  left: 42.5%;
 }
 .right {
   color: #023E8A;
