@@ -8,5 +8,6 @@ steps:
   entrypoint: npm
   args: ["run", "build"]
 - name: "gcr.io/cloud-builders/gcloud"
+  dir: "communicate"
   args: ["app", "deploy"]
 timeout: "1600s"
