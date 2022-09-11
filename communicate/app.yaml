@@ -1,5 +1,4 @@
 runtime: nodejs16
-threadsafe: true
 
 handlers:
 - url: /
