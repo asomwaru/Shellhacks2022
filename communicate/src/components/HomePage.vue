@@ -52,22 +52,19 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     audioChunks.push(event.data);
   });
 
-  mediaRecorder.addEventListener("stop", () => {
+  mediaRecorder.addEventListener("stop", async () => {
     const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
     const formData = new FormData();
     formData.append("file", audioBlob);
     formData.append("fromLang", turn.value ? l1.tag : l2.tag);
     formData.append("target", turn.value ? l2.tag : l1.tag);
-    fetch("http://localhost:8081/translate/stts", {
+    let res = await fetch("http://localhost:8081/translate/stts", {
       method: "POST",
       body: formData,
-    }).then(async (res) => {
-      const url = window.URL.createObjectURL(await res.blob());
-      new Audio(url).play();
-      waiting.value = false;
-    }).catch((e) => {
-      console.log(e)
     });
+    const url = window.URL.createObjectURL(await res.blob());
+    new Audio(url).play();
+    waiting.value = false;
     turn.value = !(turn.value);
   });
 });
