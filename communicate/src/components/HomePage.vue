@@ -131,7 +131,7 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
 
     let texts = await (
       await fetch(
-        `http://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stt`,
+        `https://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stt`,
         {
           method: "POST",
           body: formData,
@@ -147,7 +147,7 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     o2.value = turn.value ? texts.translation[0] : texts.transcript;
 
     let audio = await fetch(
-      `http://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stts`,
+      `https://${process.env.VUE_APP_REMOTE_ADDRESS}/translate/stts`,
       {
         method: "POST",
         body: formData,
