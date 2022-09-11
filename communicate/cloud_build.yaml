@@ -4,16 +4,16 @@ steps:
   entrypoint: npm
   args: ["install"]
   env:
-    - 'VUE_APP_REMOTE_ADDRESS=34.148.116.100:8081'
+    - 'VUE_APP_REMOTE_ADDRESS=gibbr.duckdns.org'
 - name: node:16.17.0
   dir: "communicate"
   env:
-    - 'VUE_APP_REMOTE_ADDRESS=34.148.116.100:8081'
+    - 'VUE_APP_REMOTE_ADDRESS=gibbr.duckdns.org'
   entrypoint: npm
   args: ["run", "build"]
 - name: "gcr.io/cloud-builders/gcloud"
   env:
-    - 'VUE_APP_REMOTE_ADDRESS=34.148.116.100:8081'
+    - 'VUE_APP_REMOTE_ADDRESS=gibbr.duckdns.org'
   dir: "communicate"
   args: ["app", "deploy"]
 timeout: "1600s"
