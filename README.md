@@ -1,3 +1,8 @@
 # ShellHacks 2022
 
-Hello World!
+## Contributors
+
+- Alex Somwaru
+- Maximo Fernandez
+- Jackie
+- Victor

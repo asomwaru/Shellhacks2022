@@ -19,7 +19,9 @@ app.use(cors());
 const { translate } = require("./routes/index");
 
 app.use("/translate", translate);
-app.use("/*", ()
+app.use("/*", (req, res, next, err) => {
+  console.log(err);
+});
 // ===============
 
-app.listen("8080");
+app.listen("8081");

@@ -36,6 +36,6 @@ override.tf.json
 terraform.rc
 
 terraform/.terraform
-
 .ignore
 node_modules
+terraform/creds.json

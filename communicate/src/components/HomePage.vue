@@ -1,6 +1,6 @@
 <template>
   <div class="full">
-    <p class="title">Gibbri.sh</p>
+    <p class="title" :class="turn ? 'gray' : ''">Gibbri.sh</p>
     <p class="large left" :class="turn ? 'gray' : ''">Tran</p>
     <p class="large right" :class="!turn ? 'gray' : ''">slate</p>
     <div class="half blue" :class="!turn ? 'gray' : ''">
@@ -24,6 +24,27 @@
           :class="recording ? 'recording' : ''"
         >
           </v-progress-circular>
+          
+    <v-progress-circular
+      class="recording"
+      :rotate="180"
+      :size="82"
+      :width="4"
+      indeterminate
+      color="#9E2A2B"
+      :class="waiting ? '' : 'no-op'"
+    ></v-progress-circular>
+
+    <svg @click="flip" :class="turn ? 'gray' : ''"
+      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" id="flip" class="w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+    </svg>
+
+
+    <svg @click="play(LATEST_URL)" :class="!  turn ? 'gray' : ''"
+      xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" id="redo" class="w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
   </div>
 </template>
 
@@ -42,7 +63,9 @@ const value = ref(0);
 let interval;
 
 const l1 = reactive({ label: "English", tag: "en" });
-const l2 = reactive({ label: "español", tag: "es" });
+const l2 = reactive({ label: "Español", tag: "es" });
+
+const LATEST_URL = ref('');
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
   ready = true;
@@ -52,23 +75,21 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     audioChunks.push(event.data);
   });
 
-  mediaRecorder.addEventListener("stop", () => {
+  mediaRecorder.addEventListener("stop", async () => {
     const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
     const formData = new FormData();
     formData.append("file", audioBlob);
     formData.append("fromLang", turn.value ? l1.tag : l2.tag);
     formData.append("target", turn.value ? l2.tag : l1.tag);
-    fetch("http://localhost:8081/translate/stts", {
+    let res = await fetch("http://localhost:8081/translate/stts", {
       method: "POST",
       body: formData,
-    }).then(async (res) => {
-      const url = window.URL.createObjectURL(await res.blob());
-      new Audio(url).play();
-      waiting.value = false;
-    }).catch((e) => {
-      console.log(e)
     });
+    LATEST_URL.value = window.URL.createObjectURL(await res.blob());
+    play(LATEST_URL.value);
+    waiting.value = false;
     turn.value = !(turn.value);
+    waiting.value = false;
   });
 });
 
@@ -95,9 +116,17 @@ const toggleRecord = () => {
   }
 };
 
+function play(url) {
+  new Audio(url).play();
+}
+
 const languagesReady = computed(() => {
   return l1.value !== "" && l2.value !== "";
 });
+
+function capitalizeFirst(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 let languages = [
   "af",
@@ -145,9 +174,13 @@ let languages = [
   "uk",
   "vi",
 ].map((item) => ({
-  label: new Intl.DisplayNames([item], { type: "language" }).of(item),
+  label: capitalizeFirst(new Intl.DisplayNames([item], { type: "language" }).of(item)),
   tag: item,
 }));
+
+function flip() {
+  turn.value = !turn.value;
+}
 
 const langs = languages.map((item) => item.label);
 
@@ -168,6 +201,8 @@ watch(l2, () => {
   position: absolute;
   top: 15px;
   left: 25px;
+  color: black;
+  transition: color 1s;
 }
 
 .full {
@@ -255,11 +290,11 @@ label.v-label.v-field-label {
 
 .left {
   color: #C15D00;
-  left: 42.7%;
+  left: 42.6%;
 }
 .right {
   color: #023E8A;
-  left: 50.1%;
+  left: 50.3%;
 }
 
 .disabled {
@@ -302,5 +337,38 @@ p.gray {
 
 .v-progress-circular.recording {
   opacity: 1;
+}
+
+.no-op {
+  opacity: 0 !important;
+}
+
+#redo {
+  position: absolute;
+  bottom: 140px;
+  left: 58%;
+  cursor: pointer;
+  width: 60px;
+  color: #023E8A;
+  transition: color 1s;
+}
+
+#flip {
+  position: absolute;
+  bottom: 140px;
+  left: 38.5%;
+  cursor: pointer;
+  width: 60px;
+  color: #C15D00;
+  transition: color ;
+  transition: color 1s;
+}
+
+#flip.gray, #redo.gray {
+  color: #999;
+}
+
+.title.gray {
+  color: white;
 }
 </style>
