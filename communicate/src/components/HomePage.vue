@@ -42,7 +42,7 @@ const value = ref(0);
 let interval;
 
 const l1 = reactive({ label: "English", tag: "en" });
-const l2 = reactive({ label: "español", tag: "es" });
+const l2 = reactive({ label: "Español", tag: "es" });
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
   ready = true;
@@ -99,6 +99,10 @@ const languagesReady = computed(() => {
   return l1.value !== "" && l2.value !== "";
 });
 
+function capitalizeFirst(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 let languages = [
   "af",
   "ar",
@@ -145,7 +149,7 @@ let languages = [
   "uk",
   "vi",
 ].map((item) => ({
-  label: new Intl.DisplayNames([item], { type: "language" }).of(item),
+  label: capitalizeFirst(new Intl.DisplayNames([item], { type: "language" }).of(item)),
   tag: item,
 }));
 
