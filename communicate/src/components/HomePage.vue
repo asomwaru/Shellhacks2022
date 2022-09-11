@@ -5,12 +5,18 @@
     <p class="large right" :class="!turn ? 'gray' : ''">slate</p>
     <div class="half blue" :class="!turn ? 'gray' : ''">
       <div class="flex">
-        <v-select v-model="l1.label" :items="langs" label="Language" id="l1" />
+        <div class="wrapper left">
+          <v-select v-model="l1.label" :items="langs" label="Language" id="l1" />
+          <p id="o1">{{ o1 }}</p>
+        </div>
       </div>
     </div>
     <div class="half" :class="turn ? 'gray' : ''">
       <div class="flex">
-        <v-select v-model="l2.label" :items="langs" label="Language" id="l2" />
+        <div class="wrapper right">
+          <v-select v-model="l2.label" :items="langs" label="Language" id="l2" />
+          <p id="o2">{{ o2 }}</p>
+        </div>
       </div>
     </div>
 
@@ -65,6 +71,9 @@ let interval;
 const l1 = reactive({ label: "English", tag: "en" });
 const l2 = reactive({ label: "Español", tag: "es" });
 
+const o1 = ref('');
+const o2 = ref('');
+
 const LATEST_URL = ref('');
 
 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
@@ -81,11 +90,24 @@ navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
     formData.append("file", audioBlob);
     formData.append("fromLang", turn.value ? l1.tag : l2.tag);
     formData.append("target", turn.value ? l2.tag : l1.tag);
-    let res = await fetch("http://localhost:8081/translate/stts", {
+    
+    let texts = await (await fetch("http://localhost:8081/translate/stt", {
+      method: "POST",
+      body: formData,
+    })).json();
+    
+    console.log(texts, turn);
+    
+    // eslint-disable-next-line
+    o1.value = turn.value ? texts.transcript : texts.translation[0];
+    // eslint-disable-next-line
+    o2.value = turn.value ? texts.translation[0] : texts.transcript;
+    
+    let audio = await fetch("http://localhost:8081/translate/stts", {
       method: "POST",
       body: formData,
     });
-    LATEST_URL.value = window.URL.createObjectURL(await res.blob());
+    LATEST_URL.value = window.URL.createObjectURL(await audio.blob());
     play(LATEST_URL.value);
     waiting.value = false;
     turn.value = !(turn.value);
@@ -195,6 +217,11 @@ watch(l2, () => {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;700&family=Pacifico&display=swap');
+body {
+  overflow: hidden;
+  font-family: Montserrat;
+}
+
 .title {
   font-family: Pacifico, cursive;
   font-size: 32px;
@@ -224,19 +251,6 @@ watch(l2, () => {
   background: #023E8A;
 }
 
-.v-input {
-  margin: 0 40%;
-  /*display: inline;*/
-}
-
-.flex {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-}
-
 .recorder {
   background: rgba(0,0,0,0);
   width: 80px;
@@ -258,19 +272,6 @@ watch(l2, () => {
   border-radius: 10px !important;
 }
 
-.direction {
-  opacity: 0.6;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  margin-top: auto;
-  margin-bottom: auto;
-  height: 60px;
-  width: 60px;
-  transform: translateX(-50%) translateY(-40px) rotateY(0deg);
-  transition: transform 0.5s;
-}
-
 .flip {
   transform: translateX(-50%) translateY(-40px) rotateY(-180deg);
   transition: transform 0.5s;
@@ -290,7 +291,7 @@ label.v-label.v-field-label {
 
 .left {
   color: #C15D00;
-  left: 42.6%;
+  right: 50.2%;
 }
 .right {
   color: #023E8A;
@@ -370,5 +371,54 @@ p.gray {
 
 .title.gray {
   color: white;
+}
+
+.flex {
+  display: flex;
+  /*flex-direction: column;*/
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  /*margin: 50% 0;*/
+}
+
+.v-input {
+  /*margin: 0 20%;*/
+  position: absolute;
+  width: 100%;
+  height: 20px;
+  z-index: 4;
+  color: white;
+}
+
+#o1, #o2 {
+  color: white;
+  padding: 60px 17px 10px 17px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,.1);
+  display: inline-block;
+  border-radius: 0 0 10px 10px;
+}
+
+.wrapper {
+  position: absolute;
+  /*display: flex-child;*/
+  width: 380px;
+  bottom: 270px;
+  height: 260px;
+  /*background: red;*/
+  box-shadow: 0px 0px 20px 3px rgba(0,0,0,0.2);
+  
+}
+.wrapper.right {
+  right: 1%;
+  margin: auto;
+}
+.wrapper.left {
+  left: 13%;
 }
 </style>
